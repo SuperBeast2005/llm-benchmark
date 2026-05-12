@@ -157,6 +157,16 @@ python ai_unittest.py
 - python-dotenv
 - Zugriff auf LLM-APIs (OpenAI, Google, Anthropic)
 
+### Installation der Abhängigkeiten
+
+Installiere alle erforderlichen Python-Pakete mit:
+
+```bash
+pip install -r requirements.txt
+```
+
+Die `requirements.txt` enthält alle notwendigen Abhängigkeiten mit spezifischen Versionen für eine reproduzierbare Installation.
+
 ## Lizenz
 
 Dieses Projekt ist Teil einer Bachelor-Arbeit.
