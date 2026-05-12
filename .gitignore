@@ -1,0 +1,5 @@
+.env
+.venv
+generated_code
+__pycache__
+llm-benchmark-bruno
