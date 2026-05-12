@@ -34,7 +34,6 @@ def ai_benchmark(model_name: str, user_prompt: Prompt, system_prompt: str | None
         system_prompt=system_prompt,
         tools=tools
     )
-
     response = agent.invoke(
         {"messages": [{"role": "user", "content": user_prompt.prompt}]},
         config={"callbacks": [langfuse_handler]}
@@ -42,6 +41,7 @@ def ai_benchmark(model_name: str, user_prompt: Prompt, system_prompt: str | None
 
     serializable_messages = [message_to_dict(m) for m in response['messages']]
 
+    # Extract response details
     code_response = serializable_messages[1]['data']['content']
     token_usage = serializable_messages[1]['data']['response_metadata']['token_usage']
     prompt_tokens = token_usage['prompt_tokens']
@@ -56,6 +56,7 @@ def ai_benchmark(model_name: str, user_prompt: Prompt, system_prompt: str | None
     model = model.replace('-', '_').replace('.', '_')
     Path(f"generated_code/{model}").mkdir(parents=True, exist_ok=True)
 
+    # Save the AI response and the generated code to separate files
     with open(f"generated_code/{model}/{user_prompt.prompt_type}.txt", "w") as f:
         f.write(ai_response)
     
