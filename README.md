@@ -6,7 +6,7 @@ Ein umfassendes Benchmark-Tool zur Evaluierung von Large Language Models (LLMs) 
 
 Dieses Projekt ermöglicht die systematische Bewertung verschiedener LLM-Modelle bei der Generierung von Programm-Code. Es nutzt verschiedene Prompt-Techniken und bewertet die Qualität des generierten Codes durch automatisierte Unit-Tests.
 
-![LLM-Benchmark Workflow](generated_code/workflow.png)
+![LLM-Benchmark Workflow](Pass@k-Benchmark.jpg)
 
 ## Projektstruktur
 
@@ -116,6 +116,29 @@ ai_benchmark(
     user_prompt=Prompt("test", "Return the factorial of a number in python."),
     tools=None
 )
+```
+
+## Beispiel-Output
+
+Hier ist ein Beispiel für die Ausgabe der `ai_benchmark` Funktion (aus `generated_code/gpt_5_4/test.txt`):
+
+```
+Model: gpt-5.4
+Prompt-Type: test
+Prompt Tokens: 56        
+Prompt:
+Return the factorial of a number in python.
+
+Completion Tokens: 56
+Response:
+
+def factorial(n):
+    if n < 0:
+        raise ValueError("Factorial is not defined for negative numbers.")
+    result = 1
+    for i in range(2, n + 1):
+        result *= i
+    return result
 ```
 
 ## Tests ausführen
