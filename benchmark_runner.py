@@ -20,9 +20,9 @@ import json
 from benchmark_logger import BenchmarkLogger
 from prompt import Prompt
 from gsm_runner import run_gsm
-from benchmark import ai_benchmark
+from ai_request_handler import ai_request
 from passatk import pass_at_k
-from extract_testdata import extract_test_data
+from extract_test_data import extract_test_data
 
 # ==================== KONFIGURATION ====================
 GSM_PATH = Path(r"C:\DEV\Workspaces\geographic-site-management")
@@ -35,7 +35,7 @@ REPORT_DIR = Path(__file__).parent / "reports"
 
 # ==================== LLM'S & PROMPTS ====================
 #LLM's
-claude = "claude-sonnet-4-6"
+claude = "openai:claude-sonnet-4-6"
 gemini = "openai:WARN-GLOBAL_gemini-3-pro-preview"
 chat_gpt = "openai:gpt-4.1"
 mistral = "openai:mistral-large-3"
@@ -79,7 +79,13 @@ If you include any explanations or comments, please add them as java comments.
 Make sure the code is production-ready, includes proper error handling and has the same class name as the java file name."""
 
 # ==================== GENERIERUNG & EINBINDUNG DES JAVA CODES ====================
-def run_python_benchmark(models: list[str], prompts: list[Prompt]):
+def run_python_benchmark(models: list[str], prompts: list[Prompt]) -> tuple[list[str], list[Prompt]]:
+    """ Führt den Python Benchmark aus und generiert Java Code für jedes Modell und jeden Prompt.
+    
+    Parameter:
+        models: Liste der Modellnamen
+        prompts: Liste der Prompts
+    """
     try:
         for llm in models:
             for user_prompt in prompts:
@@ -87,7 +93,7 @@ def run_python_benchmark(models: list[str], prompts: list[Prompt]):
                 logger.info(f"Generiert Code für:{user_prompt.use_case} mit Prompt-Typ:{user_prompt.prompt_type} und Modell:{llm}")
 
                 # Führe Benchmark aus
-                ai_benchmark(
+                ai_request(
                     model_name=llm,
                     user_prompt=user_prompt,
                     system_prompt=system_prompt,
@@ -102,8 +108,13 @@ def run_python_benchmark(models: list[str], prompts: list[Prompt]):
         raise
     return models, prompts
 
-def write_to_gsm(model: str, prompt: Prompt): #TODO: Implementieren
-
+def write_to_gsm(model: str, prompt: Prompt): 
+    """ Liest den generierten Java Code aus der generierten_code Struktur und schreibt ihn in die GSM App ein.
+    
+    Parameter:
+    model: Name des Modells, um den Pfad zum generierten Code zu bestimmen
+    prompt: Prompt Objekt, um den Pfad zum generierten Code zu bestimmen
+    """
     model_name = model.split(':')[1]
     model_name = model_name.removeprefix("WARN-GLOBAL_") if model_name.startswith("WARN-GLOBAL_") else model_name
     model_name = model_name.replace('-', '_').replace('.', '_')
@@ -168,6 +179,10 @@ def build_gsm() -> bool:
 
 
 def run_gsm_functional_tests() -> bool:
+    """ Führt die Functional Tests für GSM mit Gradle aus
+    Returns:
+        True wenn erfolgreich, False sonst
+    """
     gradle_cmd = [
         str(FUNCTIONAL_TESTS / "gradlew.bat"),
         "test",
@@ -180,6 +195,7 @@ def run_gsm_functional_tests() -> bool:
         #"--tests", "de.telekom.geo.site.test.utils.*",
     ]
 
+    # Wechsle in Functional Tests Verzeichnis und führe Tests aus
     result = subprocess.Popen(
         gradle_cmd,
         cwd=FUNCTIONAL_TESTS,
@@ -190,8 +206,14 @@ def run_gsm_functional_tests() -> bool:
     return result
 
 # ==================== MAIN ====================
-def main():
-    
+def benchmark():
+    """ Führt den gesamten Benchmark Workflow aus:
+    1. Generiert Java Code via LLM Benchmark
+    2. Speichert generierten Code in separates Verzeichnis
+    3. Führt Gradle Tests aus
+    4. Vergleicht Ergebnisse
+    5. Generiert kombiniertem Report
+    """
     # Initialisiere Logger
     global logger
     log_file = REPORT_DIR / f"benchmark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
@@ -202,7 +224,7 @@ def main():
     logger.info("=" * 60)
     logger.info("Generiert Java Code")
     #llms_n_prompts = run_python_benchmark(llms, test_prompts)
-    ai_benchmark(
+    ai_request(
         model_name=mistral,
         user_prompt=caveman,
         system_prompt=system_prompt,
@@ -247,4 +269,4 @@ def main():
     return 0 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(benchmark())

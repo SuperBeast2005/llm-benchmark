@@ -8,8 +8,9 @@ TEST_RESULTS = Path(r"test_results")
 endpoints = ["create", "delete", "list", "patch", "retrieve"]
 
 def extract_test_data() -> dict:
+    """Extrahiert die Testergebnisse der GSM Functional Tests aus den XML Dateien der funktionalen Tests und speichert sie in JSON Dateien."""
     results={}
-    #Read all XML files in the test results directory and extract test case information
+    #Lesen der XML Dateien der jeweiligen Endpunkt_Tests
     for endpoint in endpoints:
         suite_info = {
                 "tests": [],
@@ -24,7 +25,7 @@ def extract_test_data() -> dict:
                 endpoint_dir = TEST_RESULTS / endpoint
                 endpoint_dir.mkdir(parents=True, exist_ok=True)
 
-                #Join Individual Test Infomration into a single JSON file per endpoint
+                #Extrahieren der Testergebnisse aus XML Datei
                 root = ET.parse(test).getroot()
                 #print(root)
                 #print(root.attrib)
@@ -39,7 +40,7 @@ def extract_test_data() -> dict:
             else:
                 continue
         
-    #Write results to each endpoint JSON file
+    #Speichern der Ergebnisse in JSON Dateien
     for key, value in results.items():
         with open(TEST_RESULTS / key / f"{key}_results.json", "w") as f:
             json.dump(value, f)

@@ -4,20 +4,20 @@ import sys
 import os
 
 GSM_PATH = Path(r"C:\DEV\Workspaces\geographic-site-management")
-
 LLM_BENCHMARK = Path(__file__).parent
 
 def run_gsm():
+    """ Startet die Spring Boot Anwendung von Geographic Site Management in einem neuen Fenster."""
 
     print(f"Starting Spring Boot application from: {GSM_PATH}")
     print("-" * 60)
 
     mvnw_path = GSM_PATH / 'mvnw.cmd'
-    
     if not mvnw_path.exists():
         print(f"Error: mvnw.cmd not found at {mvnw_path}")
         sys.exit(1)
 
+    # Ausführen des mvnw-Befehls für das Starten der Spring Boot Anwendung in einem neuen Fenster
     try:
         process = subprocess.Popen(
             [str(mvnw_path), 'spring-boot:run'],

@@ -12,16 +12,23 @@ system_prompt_java = """Your task is to generate java code for the given user pr
 system_prompt_python = """Your task is to generate python code for the given user prompt. Only generate python code and nothing else. 
     If you include any explanations or comments, please add them as python comments."""
 
-def ai_benchmark(model_name: str, user_prompt: Prompt, system_prompt: str | None, tools: list | None) -> None:
-    #Load environment variables from .env file
+def ai_request(model_name: str, user_prompt: Prompt, system_prompt: str | None, tools: list | None) -> None:
+    """ Führt eine Anfrage an das LLM aus, um Code zu generieren, und speichert die Ergebnisse in Text- und Java-Dateien.
+    
+    Parameter:
+    - model_name (str): Der Name des Modells, das für die Codegenerierung verwendet werden soll.
+    - user_prompt (Prompt): Ein Prompt-Objekt, das die Details der Anfrage enthält (use_case, prompt_type, prompt).
+    - system_prompt (str | None): Ein optionaler System-Prompt, der Anweisungen für die Codegenerierung enthält.
+    - tools (list | None): Eine optionale Liste von Tools, die für die Codegenerierung verwendet werden können.
+    """
+    #Laden der Umgebungsvariablen aus der .env Datei
     load_dotenv()
 
-    # Initialize Langfuse client
+    # Initialisieren von Langfuse Client und Handler
     langfuse = get_client()
-
-    # Initialize Langfuse CallbackHandler for Langchain (tracing)
     langfuse_handler = CallbackHandler()
 
+    # Erstellen des Agenten und Ausführung der Anfrage
     agent = create_agent(
         model=model_name,
         system_prompt=system_prompt,
@@ -31,9 +38,9 @@ def ai_benchmark(model_name: str, user_prompt: Prompt, system_prompt: str | None
         {"messages": [{"role": "user", "content": user_prompt.prompt}]},
         config={"callbacks": [langfuse_handler]}
     )
-    serializable_messages = [message_to_dict(m) for m in response['messages']]
 
-    # Extract response details
+    # Extrahieren des generierten Code's und der Token-Nutzung aus der Antwort
+    serializable_messages = [message_to_dict(m) for m in response['messages']]
     code_response = serializable_messages[1]['data']['content']
     token_usage = serializable_messages[1]['data']['response_metadata']['token_usage']
     prompt_tokens = token_usage['prompt_tokens']
@@ -45,7 +52,7 @@ def ai_benchmark(model_name: str, user_prompt: Prompt, system_prompt: str | None
     
     Path(f"generated_code/{model}/{user_prompt.prompt_type}/{user_prompt.use_case}").mkdir(parents=True, exist_ok=True)
 
-    # Save the AI Meta Data and the generated code to separate files
+    # Speichern des generierten Code's und Token-Nutzung in einer Textdatei und die Java-Methode in einer .java Datei
     with open(f"generated_code/{model}/{user_prompt.prompt_type}/{user_prompt.use_case}/{user_prompt.use_case}.txt", "w") as f:
         f.write(f"\nModel: {model}\nPrompt-Type: {user_prompt.prompt_type}\nPrompt-Tokens: {prompt_tokens}\
         \nCompletion-Tokens: {completion_tokens}\nPrompt: {user_prompt.use_case}\n{user_prompt.prompt}\nSystem-Prompt:\n{system_prompt}\n")
@@ -54,7 +61,7 @@ def ai_benchmark(model_name: str, user_prompt: Prompt, system_prompt: str | None
         f.write(code_response)
 
 if __name__ == "__main__":
-    ai_benchmark(
+    ai_request(
         model_name="openai:WARN-GLOBAL_gemini-3-pro-preview",
         user_prompt=Prompt(use_case="Addition", prompt_type="few_shot", prompt="Implementiere die Funktion add(int a, int b) die zwei Zahlen addiert und das Ergebnis zurückgibt."),
         system_prompt=system_prompt_java,
