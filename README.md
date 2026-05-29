@@ -1,171 +1,139 @@
 # LLM-Benchmark
 
-Ein umfassendes Benchmark-Tool zur Evaluierung von Large Language Models (LLMs) bei der Code-Generierung.
+Ein Repository zur Generierung, Speicherung und Auswertung von LLM-generiertem Java-Code im Kontext eines bestehenden Java/Spring-Boot-Projekts.
 
 ## Überblick
 
-Dieses Projekt ermöglicht die systematische Bewertung verschiedener LLM-Modelle bei der Generierung von Programm-Code. Es nutzt verschiedene Prompt-Techniken und bewertet die Qualität des generierten Codes durch automatisierte Unit-Tests.
+Dieses Projekt nutzt LLM-Modelle zur automatischen Erzeugung von Java-Code und unterstützt einen Workflow zur Integration in ein externes GSM-Projekt sowie zur Auswertung der Ergebnisse.
 
-![LLM-Benchmark Workflow](Pass@k-Benchmark.jpg)
+Der Fokus liegt auf:
+- Generierung von Java-Code mithilfe von LLMs
+- Speicherung der generierten Ergebnisse im Ordner `generated_code`
+- Integration in ein Java-Projekt via `benchmark_runner.py`
+- Auswertung mit Pass@K- und Testdatenanalyse
 
 ## Projektstruktur
 
 ```
-llm-benchmark/
-├── benchmark.py          # Hauptmodul für LLM-Benchmarking
-├── ai_unittest.py        # Unit-Tests für generierte Codes
-├── passatk.py            # Pass@K Metrik-Berechnung
-├── prompt.py             # Prompt-Verwaltung
-├── generated_code/       # Speicherort für generierte Codes
-└── README.md             # Diese Datei
+.
+├── ai_request_handler.py    # LLM-Anfragen und Generierung von Java-Code
+├── benchmark_logger.py      # Einfacher Logger für den Benchmark-Workflow
+├── benchmark_runner.py      # Steuerung des Workflows und GSM-Integration
+├── extract_test_data.py     # Extraktion und Konvertierung von Testdaten aus XML-Dateien
+├── gsm_runner.py            # Starten der GSM Spring Boot Anwendung
+├── passatk.py              # Berechnung der Pass@K-Metrik
+├── prompt.py                # Prompt-Klasse zur Beschreibung von Anfragen
+├── requirements.txt         # Python-Abhängigkeiten
+├── reports/                 # Berichte und Logdateien
+├── generated_code/          # Erzeugte Code-Ausgaben (Laufzeit)
+├── llm-benchmark-bruno/     # Zusatzdaten / Konfigurationsordner
+├── Pass@k-Benchmark.jpg     # Diagramm zum Workflow
+└── README.md                # Dieses Dokument
 ```
 
 ## Module
 
-### benchmark.py
+### `ai_request_handler.py`
 
-Das Hauptmodul für die Benchmark-Durchführung. Es koordiniert:
+Führt die Anfrage an ein LLM durch und speichert die Antwort als Java-Code sowie Metadaten.
 
-- **Modellauswahl**: Unterstützt verschiedene LLM-Modelle (GPT-5.4, Gemini Pro 3, Claude Sonnet 4.6)
-- **Prompt-Techniken**: 
-  - Zero-Shot Prompting
-  - Few-Shot Prompting
-  - Caveman Prompting
-  - Chain-of-Thoughts Prompting
-- **Code-Generierung**: Generiert Code basierend auf Benutzer-Prompts
-- **Speicherung**: Speichert generierte Codes und Metadaten in strukturierten Verzeichnissen
+Wichtig:
+- Verwendet `langchain`, `langfuse` und `python-dotenv`
+- Speichert Ergebnisse unter `generated_code/{model}/{prompt_type}/{use_case}/`
+- Legt eine `.txt`-Datei mit Token-Nutzung, Prompt und System-Prompt an
+- Legt eine `.java`-Datei mit dem generierten Java-Code an
 
-**Hauptfunktion:**
-```python
-ai_benchmark(model_name: str, user_prompt: Prompt, system_prompt: str | None, tools: list | None) -> str
-```
+### `benchmark_runner.py`
 
-Die Funktion:
-- Erstellt einen Agent mit dem angegebenen Modell
-- Ruft das Modell mit dem Prompt auf
-- Extrahiert Token-Nutzung und Antworten
-- Speichert die Ergebnisse in `generated_code/{model}/{prompt_type}.py` und `.txt`
+Koordiniert den Benchmark-Workflow und die Integration in das GSM-Projekt.
 
-### ai_unittest.py
+Hauptaufgaben:
+- Definiert LLM-Modelle und Prompts
+- Ruft `ai_request()` für die Code-Generierung auf
+- Liest generierten Code und schreibt ihn in eine existierende Java-Datei des GSM-Projekts
+- Unterstützt Build- und Test-Schritte für das Zielprojekt
 
-Automatisierte Tests zur Validierung von generiertem Code. 
+Hinweis:
+- In `benchmark_runner.py` sind Pfade zu einem lokalen GSM-Workspace definiert und müssen für den eigenen Rechner angepasst werden.
 
-**Funktionen:**
-- Importiert generierte Code-Module
-- Führt Unit-Tests durch
-- Berechnet Pass@K Metriken
-- Liefert detaillierte Test-Berichte mit:
-  - Anzahl durchgeführter Tests
-  - Erfolgreich bestandene Tests
-  - Fehlgeschlagene Tests
-  - Fehler in der Code-Ausführung
+### `gsm_runner.py`
 
-**Beispiel-Output:**
-```
---- Zusammenfassung ---
-Anzahl der Tests: 1
-Erfolgreich: 1
-Fehlgeschlagen: 0
-Fehler (Code-Errors): 0
-```
+Startet das GSM Spring Boot Projekt mit dem Maven Wrapper (`mvnw.cmd`).
 
-### passatk.py
+### `passatk.py`
 
-Berechnet die **Pass@K Metrik** - eine Standard-Evaluierungsmetrik für Code-Generierung.
+Berechnet die Pass@K-Metrik zur Auswertung der generierten Tests.
 
-**Parameter:**
-- `n`: Gesamtzahl der generierten Code-Samples
-- `c`: Anzahl der Samples, die alle Unit-Tests bestehen
-- `k`: Anzahl der betrachteten Top-Samples
+Funktionen:
+- `calculate_pass_at_k(n, c, k)`
+- `pass_at_k(k, testdata)`
 
-**Formel:**
-$$\text{Pass@K} = 1 - \frac{\binom{n-c}{k}}{\binom{n}{k}}$$
+### `prompt.py`
 
-**Interpretation:**
-- Gibt die Wahrscheinlichkeit an, dass mindestens einer der Top-K Samples korrekt ist
-- Wert zwischen 0% und 100%
+Definiert die `Prompt`-Klasse zur sauberen Kapselung von:
+- `prompt_type`
+- `use_case`
+- `prompt`
 
-**Beispiel:**
-```python
-# Wahrscheinlichkeit mit 10 Samples, 3 korrekt, Top-5 betrachten
-calculate_pass_at_k(10, 3, 5)  # Output: ca. 99.17%
-```
+### `benchmark_logger.py`
+
+Ein einfacher Logger, der Meldungen mit Zeitstempel in eine Logdatei schreibt.
+
+### `extract_test_data.py`
+
+Extrahiert Testergebnisse aus XML-Dateien der GSM Functional Tests und speichert sie als JSON.
 
 ## Workflow
 
-Der Benchmark-Prozess folgt diesem Ablauf:
+1. Definiere Modelle und Prompts in `benchmark_runner.py`.
+2. Rufe `ai_request()` aus `ai_request_handler.py` auf, um Java-Code zu generieren.
+3. Speichere generierten Code in `generated_code/{model}/{prompt_type}/{use_case}/`.
+4. Integriere den generierten Code in das GSM-Projekt via `benchmark_runner.py`.
+5. Optional: Starte die GSM-Anwendung mit `gsm_runner.py`.
+6. Extrahiere Testdaten mit `extract_test_data.py` und berechne Pass@K mit `passatk.py`.
 
-1. **Use-Case Definition**: Spezifische Programmieraufgaben (z.B. API-Endpoints)
-2. **Prompt-Auswahl**: Verschiedene Prompt-Techniken auswählen
-3. **LLM-Auswahl**: Eines oder mehrere LLM-Modelle bestimmen
-4. **Anfrage-Ausführung**: LLM mit Use-Case und Prompt aufrufen
-5. **Response-Speicherung**: Generierte Codes als .py und Metadaten als .txt speichern
-6. **Test-Validierung**: Code mit Unit-Tests validieren
-7. **Metrik-Berechnung**: Pass@K Metrik berechnen und auswerten
-
-## Verwendungsbeispiel
+## Beispiel
 
 ```python
-from benchmark import ai_benchmark
+from ai_request_handler import ai_request
 from prompt import Prompt
 
-# Einen Benchmark durchführen
-ai_benchmark(
-    model_name="openai:WARN-GLOBAL_gpt-5.4",
-    system_prompt="Your task is to generate python code for the given user prompt. Only generate python code and nothing else.",
-    user_prompt=Prompt("test", "Return the factorial of a number in python."),
+ai_request(
+    model_name="openai:WARN-GLOBAL_gemini-3-pro-preview",
+    user_prompt=Prompt(
+        prompt_type="few_shot",
+        use_case="Addition",
+        prompt="Implementiere die Methode add(int a, int b), die zwei Zahlen addiert und das Ergebnis zurückgibt."
+    ),
+    system_prompt="Your task is to generate java code for the given user prompt. Only generate java code and nothing else.",
     tools=None
 )
 ```
 
-## Beispiel-Output
+## Konfiguration
 
-Hier ist ein Beispiel für die Ausgabe der `ai_benchmark` Funktion (aus `generated_code/gpt_5_4/test.txt`):
-
-```
-Model: gpt-5.4
-Prompt-Type: test
-Prompt Tokens: 56        
-Prompt:
-Return the factorial of a number in python.
-
-Completion Tokens: 56
-Response:
-
-def factorial(n):
-    if n < 0:
-        raise ValueError("Factorial is not defined for negative numbers.")
-    result = 1
-    for i in range(2, n + 1):
-        result *= i
-    return result
-```
-
-## Tests ausführen
-
-Unit-Tests für generierte Codes starten:
-
-```bash
-python ai_unittest.py
-```
+- Erstelle optional eine `.env`-Datei für API-Keys und Umgebungsvariablen.
+- Passe die Pfade in `benchmark_runner.py` und `extract_test_data.py` an dein lokales GSM- und Testprojekt an.
 
 ## Anforderungen
 
 - Python 3.8+
-- langchain
-- langfuse
-- python-dotenv
-- Zugriff auf LLM-APIs (OpenAI, Google, Anthropic)
+- `langchain`
+- `langfuse`
+- `python-dotenv`
+- Zugriff auf LLM-APIs
 
-### Installation der Abhängigkeiten
-
-Installiere alle erforderlichen Python-Pakete mit:
+### Installation
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Die `requirements.txt` enthält alle notwendigen Abhängigkeiten mit spezifischen Versionen für eine reproduzierbare Installation.
+## Hinweise
+
+- `ai_unittest.py` ist nicht Teil dieses Repositories.
+- Das Projekt setzt lokale Pfade für GSM und Testdaten voraus und ist daher vor dem Einsatz anzupassen.
+- `generated_code/` wird zur Laufzeit erzeugt.
 
 ## Lizenz
 
