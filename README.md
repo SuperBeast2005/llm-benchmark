@@ -1,5 +1,7 @@
 # LLM-Benchmark
 
+![Pass@k Benchmark](Pass@k-Benchmark.jpg)
+
 Ein Repository zur Generierung, Speicherung und Auswertung von LLM-generiertem Java-Code im Kontext eines bestehenden Java/Spring-Boot-Projekts.
 
 ## Überblick
