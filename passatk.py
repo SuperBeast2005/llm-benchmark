@@ -15,9 +15,13 @@ def calculate_pass_at_k(n, c, k):
     
     pass_at = 1.0 - (combinations(n - c, k) / combinations(n, k))
 
-    return f"Die Wahrscheinlichkeit für Pass@{k} mit n={n}, c={c}, k={k} = {pass_at * 100:.2f}%"
+    return {
+        "n": n,
+        "c": c,
+        "k": k,
+        "pass_at_k": f"{pass_at * 100:.2f}%"
+    }
 
 # Beispiel
 if __name__ == "__main__":
     p_at_5 = calculate_pass_at_k(10, 3, 5)
-    print(p_at_5)

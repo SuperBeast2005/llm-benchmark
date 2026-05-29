@@ -3,3 +3,5 @@
 generated_code
 __pycache__
 llm-benchmark-bruno
+*.json
+*.log
