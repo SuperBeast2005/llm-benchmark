@@ -28,19 +28,17 @@ from extract_testdata import extract_test_data
 GSM_PATH = Path(r"C:\DEV\Workspaces\geographic-site-management")
 GSM_APP = Path(r"C:\DEV\Workspaces\geographic-site-management\src\main\java\de\telekom\gsm\api\GeographicSitesController.java")
 FUNCTIONAL_TESTS = Path(r"C:\DEV\Workspaces\gsm-functional-tests")
+TEST_RESULTS = Path(r"C:\DEV\Workspaces\gsm-functional-tests\build\test-results\test\binary")
 LLM_BENCHMARK = Path(__file__).parent
-
-# Generierte Java Code Verzeichnisse
 GENERATED_JAVA_DIR = Path(__file__).parent / "generated_code" 
 REPORT_DIR = Path(__file__).parent / "reports"
-TEST_RESULTS = Path(r"C:\DEV\Workspaces\gsm-functional-tests\build\test-results\test\binary")
 
 # ==================== LLM'S & PROMPTS ====================
 #LLM's
 claude = "claude-sonnet-4-6"
 gemini = "openai:WARN-GLOBAL_gemini-3-pro-preview"
 chat_gpt = "openai:gpt-4.1"
-mistral = "mistral-large-3"
+mistral = "openai:mistral-large-3"
 
 llms: list[str] = [
     chat_gpt,
@@ -50,22 +48,22 @@ llms: list[str] = [
 #Prompts
 few_shot = Prompt("fewshot", 
                   "Fakultaet", 
-                  "Erstelle eine Java Klasse, die die Fakultät einer Zahl berechnet. Zeige 2 Beispiele in der Klasse."
+                  "Erstelle eine Java Methode, die die Fakultät einer Zahl berechnet. Zeige 2 Beispiele in der Klasse."
                   )
 
 caveman = Prompt("caveman", 
                  "Fakultaet", 
-                 "Erstelle eine Java Klasse, Soll Fakütltät brechen. Zeige 2 Beispiele in der Klasse."
+                 "Erstelle eine Java Methode, Soll Fakütltät brechen. Zeige 2 Beispiele in der Klasse."
                  )
 
 cot = Prompt("cot",
              "Fakultaet", 
-             "Erstelle eine Java Klasse, die die Fakultät einer Zahl berechnet. Zeige 2 Beispiele in der Klasse. Erkläre deine Schritte in Java Kommentaren."
+             "Erstelle eineJava Methode, die die Fakultät einer Zahl berechnet. Zeige 2 Beispiele in der Klasse. Erkläre deine Schritte in Java Kommentaren."
              )
 
 react = Prompt("react", 
                "Fakultaet", 
-               "Erstelle eine Java Klasse, die die Fakultät einer Zahl berechnet. Verwende die React Methode. Zeige 2 Beispiele in der Klasse."
+               "Erstelle eine Java Methode, die die Fakultät einer Zahl berechnet. Verwende die React Methode. Zeige 2 Beispiele in der Klasse."
                )
 
 prompts: list[Prompt] = [few_shot, caveman, cot, react]
@@ -76,7 +74,7 @@ test_prompts: list[Prompt] = [
 
 #Java System Prompt
 system_prompt = """Your task is to generate java code for the given user prompt. 
-Only generate java code and nothing else. The code should be a complete, compilable class.
+Only generate java methods and no classes, no additional text. The code should be a complete, compilable class.
 If you include any explanations or comments, please add them as java comments.
 Make sure the code is production-ready, includes proper error handling and has the same class name as the java file name."""
 
@@ -105,21 +103,24 @@ def run_python_benchmark(models: list[str], prompts: list[Prompt]):
     return models, prompts
 
 def write_to_gsm(model: str, prompt: Prompt): #TODO: Implementieren
+
     model_name = model.split(':')[1]
     model_name = model_name.removeprefix("WARN-GLOBAL_") if model_name.startswith("WARN-GLOBAL_") else model_name
     model_name = model_name.replace('-', '_').replace('.', '_')
     
-    with open(f"generated_code/{prompt.use_case}/{model_name}/{prompt.prompt_type}.java", "r") as f:
+    with open(f"generated_code/{model_name}/{prompt.prompt_type}/{prompt.use_case}/{prompt.use_case}.java", "r") as f:
         gen_code = f.read()
-        print(gen_code)
+        #print(gen_code)
     
     with open(GSM_APP, "r") as f:
         gsm_code = f.read()
-        print(gsm_code)
-    #    with open(GSM_PATH / r"src\main\java\de\telekom\gsm\api\GeographicSiteManagement.java", "w") as f:
-    #        gsm_code.
-    #        new_code = gen_code
-    #        f.write(new_code)
+        #print(gsm_code)
+        with open(GSM_APP, "w") as f:
+            gsm_start, gsm_end = gsm_code.rsplit("}", 1)
+            new_code = gsm_start + gen_code
+            new_code = new_code.replace("```java", "").replace("```", "")
+            new_code = "\n".join("\t\t" + line for line in new_code.splitlines()) + "\n}"
+            f.write(new_code)
 
 
 # ==================== JAVA/GSM BUILD & TEST ====================
@@ -201,11 +202,11 @@ def main():
     logger.info("=" * 60)
     logger.info("Generiert Java Code")
     #llms_n_prompts = run_python_benchmark(llms, test_prompts)
-    #ai_benchmark(
-    #    model_name=gemini,
-    #    user_prompt=few_shot,
-    #    system_prompt=system_prompt,
-    #    tools=None )
+    ai_benchmark(
+        model_name=mistral,
+        user_prompt=caveman,
+        system_prompt=system_prompt,
+        tools=None )
 
     logger.info("=" * 60)
     logger.info("Fügt Java Code zum GSM hinzu")
@@ -213,7 +214,7 @@ def main():
     #for model in llms_n_prompts[0]:
     #    for prompt in llms_n_prompts[1]:
     #        write_to_gsm(model, prompt)
-    write_to_gsm(gemini, few_shot)
+    write_to_gsm(mistral, caveman)
 
     logger.info("=" * 60)
     logger.info("Baut GSM mit Gradle")

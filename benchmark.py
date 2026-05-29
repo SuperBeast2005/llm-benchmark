@@ -43,14 +43,14 @@ def ai_benchmark(model_name: str, user_prompt: Prompt, system_prompt: str | None
     model = model.removeprefix("WARN-GLOBAL_") if model.startswith("WARN-GLOBAL_") else model
     model = model.replace('-', '_').replace('.', '_')
     
-    Path(f"generated_code/{user_prompt.use_case}/{model}").mkdir(parents=True, exist_ok=True)
+    Path(f"generated_code/{model}/{user_prompt.prompt_type}/{user_prompt.use_case}").mkdir(parents=True, exist_ok=True)
 
     # Save the AI Meta Data and the generated code to separate files
-    with open(f"generated_code/{user_prompt.use_case}/{model}/{user_prompt.prompt_type}.txt", "w") as f:
+    with open(f"generated_code/{model}/{user_prompt.prompt_type}/{user_prompt.use_case}/{user_prompt.use_case}.txt", "w") as f:
         f.write(f"\nModel: {model}\nPrompt-Type: {user_prompt.prompt_type}\nPrompt-Tokens: {prompt_tokens}\
         \nCompletion-Tokens: {completion_tokens}\nPrompt: {user_prompt.use_case}\n{user_prompt.prompt}\nSystem-Prompt:\n{system_prompt}\n")
     
-    with open(f"generated_code/{user_prompt.use_case}/{model}/{user_prompt.prompt_type}.java", "w") as f:
+    with open(f"generated_code/{model}/{user_prompt.prompt_type}/{user_prompt.use_case}/{user_prompt.use_case}.java", "w") as f:
         f.write(code_response)
 
 if __name__ == "__main__":
