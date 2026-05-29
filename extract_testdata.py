@@ -48,6 +48,3 @@ def extract_test_data() -> dict:
 
 if __name__ == "__main__":
     print(extract_test_data())
-    #with open(Path(r"C:\DEV\Workspaces\gsm-functional-tests\build\test-results\test\TEST-de.telekom.geo.site.test.create.CreateDevelopmentAreaSiteTest.xml"), "r", encoding="utf-8") as f:
-    #    content = f.read()
-    #    print(content)

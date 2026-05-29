@@ -21,7 +21,7 @@ def ai_benchmark(model_name: str, user_prompt: Prompt, system_prompt: str | None
 
     # Initialize Langfuse CallbackHandler for Langchain (tracing)
     langfuse_handler = CallbackHandler()
-    
+
     agent = create_agent(
         model=model_name,
         system_prompt=system_prompt,
@@ -54,4 +54,9 @@ def ai_benchmark(model_name: str, user_prompt: Prompt, system_prompt: str | None
         f.write(code_response)
 
 if __name__ == "__main__":
-    pass
+    ai_benchmark(
+        model_name="openai:WARN-GLOBAL_gemini-3-pro-preview",
+        user_prompt=Prompt(use_case="Addition", prompt_type="few_shot", prompt="Implementiere die Funktion add(int a, int b) die zwei Zahlen addiert und das Ergebnis zurückgibt."),
+        system_prompt=system_prompt_java,
+        tools=None
+        )

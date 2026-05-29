@@ -1,4 +1,8 @@
 import math
+import json
+from pathlib import Path
+
+REPORT_DIR = Path(__file__).parent / "reports"
 
 def calculate_pass_at_k(n, c, k):
     """
@@ -21,6 +25,23 @@ def calculate_pass_at_k(n, c, k):
         "k": k,
         "pass_at_k": f"{pass_at * 100:.2f}%"
     }
+
+def pass_at_k(k: int, testdata: dict) -> None:
+    for key, value in testdata.items():
+        
+        pass_at_k = calculate_pass_at_k(n=value["passed"] + value["failures"]  + value["skipped"], c=value["passed"], k=k)
+
+        endpoint_report_dir = REPORT_DIR / key
+        endpoint_report_dir.mkdir(parents=True, exist_ok=True)
+        with open(endpoint_report_dir / f"{key}_report.json", "w") as f:
+            json.dump({
+                "endpoint": key,
+                "n": pass_at_k["n"],
+                "c": pass_at_k["c"],
+                "k": pass_at_k["k"],
+                "pass_at_k": pass_at_k["pass_at_k"]
+            }, f)
+    return pass_at_k
 
 # Beispiel
 if __name__ == "__main__":
