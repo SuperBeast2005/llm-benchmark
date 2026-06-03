@@ -1,12 +1,3 @@
-"""
-Java Benchmark Runner - Führt Python-Benchmark aus und testet generierten Java Code
-Workflow:
-1. Generiert Java Code via LLM Benchmark
-2. Speichert generierten Code in separates Verzeichnis
-3. Führt Gradle Tests aus
-4. Vergleicht Ergebnisse
-5. Generiert kombiniertem Report
-"""
 #Standard-Libs Import
 import os
 import subprocess
@@ -20,7 +11,7 @@ import json
 from benchmark_logger import BenchmarkLogger
 from prompt import Prompt
 from gsm_runner import run_gsm
-from ai_request_handler import ai_request
+from llm_request_handler import llm_request
 from passatk import pass_at_k
 from extract_test_data import extract_test_data
 
@@ -93,7 +84,7 @@ def run_python_benchmark(models: list[str], prompts: list[Prompt]) -> tuple[list
                 logger.info(f"Generiert Code für:{user_prompt.use_case} mit Prompt-Typ:{user_prompt.prompt_type} und Modell:{llm}")
 
                 # Führe Benchmark aus
-                ai_request(
+                llm_request(
                     model_name=llm,
                     user_prompt=user_prompt,
                     system_prompt=system_prompt,
@@ -207,12 +198,13 @@ def run_gsm_functional_tests() -> bool:
 
 # ==================== MAIN ====================
 def benchmark():
-    """ Führt den gesamten Benchmark Workflow aus:
-    1. Generiert Java Code via LLM Benchmark
-    2. Speichert generierten Code in separates Verzeichnis
-    3. Führt Gradle Tests aus
-    4. Vergleicht Ergebnisse
-    5. Generiert kombiniertem Report
+    """ 
+    Führt den gesamten Benchmark Workflow aus:
+        1. Generiert Java Code via LLM-API-Request
+        2. Speichert generierten Code in das GSM-Projekt
+        3. Baut GSM mit Maven
+        4. Führt Functional Tests durch
+        5. Ermittelt Pass@K-Metrik
     """
     # Initialisiere Logger
     global logger
@@ -224,11 +216,11 @@ def benchmark():
     logger.info("=" * 60)
     logger.info("Generiert Java Code")
     #llms_n_prompts = run_python_benchmark(llms, test_prompts)
-    ai_request(
-        model_name=mistral,
-        user_prompt=caveman,
-        system_prompt=system_prompt,
-        tools=None )
+    #llm_request(
+    #    model_name=mistral,
+    #    user_prompt=caveman,
+    #    system_prompt=system_prompt,
+    #    tools=None )
 
     logger.info("=" * 60)
     logger.info("Fügt Java Code zum GSM hinzu")
@@ -236,7 +228,7 @@ def benchmark():
     #for model in llms_n_prompts[0]:
     #    for prompt in llms_n_prompts[1]:
     #        write_to_gsm(model, prompt)
-    write_to_gsm(mistral, caveman)
+    #write_to_gsm(mistral, caveman)
 
     logger.info("=" * 60)
     logger.info("Baut GSM mit Gradle")

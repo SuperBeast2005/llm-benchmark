@@ -12,7 +12,7 @@ system_prompt_java = """Your task is to generate java code for the given user pr
 system_prompt_python = """Your task is to generate python code for the given user prompt. Only generate python code and nothing else. 
     If you include any explanations or comments, please add them as python comments."""
 
-def ai_request(model_name: str, user_prompt: Prompt, system_prompt: str | None, tools: list | None) -> None:
+def llm_request(model_name: str, user_prompt: Prompt, system_prompt: str | None, tools: list | None) -> None:
     """ Führt eine Anfrage an das LLM aus, um Code zu generieren, und speichert die Ergebnisse in Text- und Java-Dateien.
     
     Parameter:
@@ -61,7 +61,7 @@ def ai_request(model_name: str, user_prompt: Prompt, system_prompt: str | None, 
         f.write(code_response)
 
 if __name__ == "__main__":
-    ai_request(
+    llm_request(
         model_name="openai:WARN-GLOBAL_gemini-3-pro-preview",
         user_prompt=Prompt(use_case="Addition", prompt_type="few_shot", prompt="Implementiere die Funktion add(int a, int b) die zwei Zahlen addiert und das Ergebnis zurückgibt."),
         system_prompt=system_prompt_java,
