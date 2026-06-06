@@ -1,6 +1,8 @@
 from pathlib import Path
 from datetime import datetime
 
+REPORT_DIR = Path(__file__).parent / "reports"
+
 class BenchmarkLogger:
     """ Ein einfacher Logger für Benchmarking-Zwecke, der Nachrichten mit Zeitstempel und Log-Level in eine Datei schreibt.
     
@@ -11,7 +13,8 @@ class BenchmarkLogger:
     - success(message: str): Loggt eine Nachricht mit dem Log-Level "SUCCESS".
     - warning(message: str): Loggt eine Nachricht mit dem Log-Level "WARNING".
     """
-    def __init__(self, log_file: Path):
+    def __init__(self):
+        log_file = REPORT_DIR / f"benchmark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
         self.log_file = log_file
         self.log_file.parent.mkdir(parents=True, exist_ok=True)
     
@@ -24,29 +27,6 @@ class BenchmarkLogger:
         with open(self.log_file, "a", encoding="utf-8") as f:
             f.write(log_message + "\n")
             
-    # Hilfsmethoden für verschiedene Log-Level
-    def info(self, message: str):
-        self.log(message, "INFO")
-    
-    def error(self, message: str):
-        self.log(message, "ERROR")
-    
-    def success(self, message: str):
-        self.log(message, "SUCCESS")
-    
-    def warning(self, message: str):
-        self.log(message, "WARNING")
-
-class RAGLogger:
-    def __init__(self):
-        pass
-
-    def log(self, message:str, level:str = "INFO"):
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        log_message = f"[{timestamp}] [{level}] {message}"
-        print("=" * 60)
-        print(log_message)
-
     # Hilfsmethoden für verschiedene Log-Level
     def info(self, message: str):
         self.log(message, "INFO")

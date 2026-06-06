@@ -1,13 +1,17 @@
-from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langfuse import get_client
 from langfuse.langchain import CallbackHandler
 from langchain_core.messages import message_to_dict
 from pathlib import Path    
 from prompt import Prompt
-from benchmark_logger import RAGLogger
+from benchmark_logger import BenchmarkLogger
 
-logger = RAGLogger()
+#Laden der Umgebungsvariablen aus der .env Datei
+from dotenv import load_dotenv
+load_dotenv()
+
+#global logger
+logger = BenchmarkLogger()
 
 system_prompt_java = """Your task is to generate java code for the given user prompt. Only generate java code and nothing else. 
     If you include any explanations or comments, please add them as java comments."""
@@ -24,9 +28,6 @@ def llm_request(model_name: str, user_prompt: Prompt, system_prompt: str | None,
     - system_prompt (str | None): Ein optionaler System-Prompt, der Anweisungen für die Codegenerierung enthält.
     - tools (list | None): Eine optionale Liste von Tools, die für die Codegenerierung verwendet werden können.
     """
-    #Laden der Umgebungsvariablen aus der .env Datei
-    load_dotenv()
-
     # Initialisieren von Langfuse Client und Handler
     langfuse = get_client()
     langfuse_handler = CallbackHandler()
@@ -44,6 +45,7 @@ def llm_request(model_name: str, user_prompt: Prompt, system_prompt: str | None,
     ):
         try:
             #logger.info(f"Event Type: {event['type']}")
+            logger.success("Events erfolgreich erhalten")
             event["messages"][-1].pretty_print()
             #logger.info(f"Event Messages: {event['messages']}\n")
         except Exception as e:
@@ -63,17 +65,21 @@ def llm_request(model_name: str, user_prompt: Prompt, system_prompt: str | None,
     Path(f"generated_code/{model}/{user_prompt.prompt_type}/{user_prompt.use_case}").mkdir(parents=True, exist_ok=True)
 
     # Speichern des generierten Code's und Token-Nutzung in einer Textdatei und die Java-Methode in einer .java Datei
-    with open(f"generated_code/{model}/{user_prompt.prompt_type}/{user_prompt.use_case}/{user_prompt.use_case}.txt", "w") as f:
-        f.write(f"\nModel: {model}\nPrompt-Type: {user_prompt.prompt_type}\nPrompt-Tokens: {prompt_tokens}\
-        \nCompletion-Tokens: {completion_tokens}\nPrompt: {user_prompt.use_case}\n{user_prompt.prompt}\nSystem-Prompt:\n{system_prompt}\n")
-    
-    with open(f"generated_code/{model}/{user_prompt.prompt_type}/{user_prompt.use_case}/{user_prompt.use_case}.java", "w") as f:
-        f.write(code_response)
+    logger.info("Speichern der Ergebnisse in txt & java-Dateien")
+    try:
+        with open(f"generated_code/{model}/{user_prompt.prompt_type}/{user_prompt.use_case}/{user_prompt.use_case}.txt", "w") as f:
+            f.write(f"\nModel: {model}\nPrompt-Type: {user_prompt.prompt_type}\nPrompt-Tokens: {prompt_tokens}\
+            \nCompletion-Tokens: {completion_tokens}\nPrompt: {user_prompt.use_case}\n{user_prompt.prompt}\nSystem-Prompt:\n{system_prompt}\n")
+            logger.success("Erfolgreich in txt-File gespeichert")
+    except Exception as e:
+        logger.error(f"Fehler beim Speichern der txt-Datei: {e}")
+
+    try:
+        with open(f"generated_code/{model}/{user_prompt.prompt_type}/{user_prompt.use_case}/{user_prompt.use_case}.java", "w") as f:
+            f.write(code_response)
+            logger.success("Erfolgreich in java-File gespeichert")
+    except Exception as e:
+        logger.error(f"Fehler beim Speichern der Java-Datei: {e}")
 
 if __name__ == "__main__":
-    llm_request(
-        model_name="openai:WARN-GLOBAL_gemini-3-pro-preview",
-        user_prompt=Prompt(use_case="Addition", prompt_type="few_shot", prompt="Implementiere die Funktion add(int a, int b) die zwei Zahlen addiert und das Ergebnis zurückgibt."),
-        system_prompt=system_prompt_java,
-        tools=None
-        )
+    pass

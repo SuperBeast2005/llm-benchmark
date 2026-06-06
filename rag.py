@@ -4,6 +4,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter, Language
 from langchain_core.documents import Document
 from langchain_classic.embeddings import CacheBackedEmbeddings  
 from langchain_classic.storage import LocalFileStore 
+from langchain.tools import tool
 from pathlib import Path
 import os
 import time
@@ -11,9 +12,9 @@ import re
 from dotenv import load_dotenv
 load_dotenv()  # Lädt die Umgebungsvariablen aus der .env-Datei
 
-from benchmark_logger import RAGLogger
+from benchmark_logger import BenchmarkLogger
 
-logger = RAGLogger()
+logger = BenchmarkLogger()
 
 GSM_PATH = Path(r"C:\DEV\Workspaces\geographic-site-management")
 
@@ -62,19 +63,20 @@ def perform_java_chunking(code_document, chunk_size=150, chunk_overlap=30) -> li
 
     # Skip Java .class binary files — they are not text and cause Unicode errors
     if str(vollstaendiger_pfad).endswith('.class'):
-        logger.info(f"Skipping binary .class file: {vollstaendiger_pfad}")
+        logger.info(f"Überspringe binäre .class-Datei: {vollstaendiger_pfad}")
         return documents
 
-    # Only process text-like file types here
+    # Only process text-like file types here TODO: mit .glob("*.java") eventuell refactoren
     if str(vollstaendiger_pfad).endswith((".java", ".md", ".txt", ".sql")):
         try:
+            logger.info(f"Lesen der Datei: {vollstaendiger_pfad} in utf-8")
             with open(vollstaendiger_pfad, "r", encoding="utf-8") as f:
                 content = f.read()
-
                 # For Java source use a language-aware splitter; for other text use the generic splitter
                 if str(vollstaendiger_pfad).endswith(".java"):
                     code_chunks = java_splitter.split_text(content)
-                    logger.info(f"Code document split into {len(code_chunks)} chunks")
+                    logger.success(f"Code Dokument in {len(code_chunks)} Chunks/Blöcke aufgeteilt")
+                    logger.warning(f"Code Dokument wurde anhand von Java Charakteristiken gesplittet!!!")
                     # Extract classes and methods for better metadata
                     for i, chunk in enumerate(code_chunks):
                         method_match = re.search(r'(?:public|protected|private|static|\s)+\s*[\w\<\>\[\]]+\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(', chunk)
@@ -107,6 +109,7 @@ def perform_java_chunking(code_document, chunk_size=150, chunk_overlap=30) -> li
                         documents.append(doc)
                 else:
                     code_chunks = text_splitter.split_text(content)
+                    logger.success(f"Code Dokument in {len(code_chunks)} Chunks/Blöcke aufgeteilt")
                     for i, chunk in enumerate(code_chunks):
                         doc = Document(
                             page_content=chunk,
@@ -122,9 +125,11 @@ def perform_java_chunking(code_document, chunk_size=150, chunk_overlap=30) -> li
             logger.error(f"Fehler beim Verarbeiten von {vollstaendiger_pfad}: {e}")
             # Fallback: try reading with a different encoding and use generic splitter
             try:
+                logger.info(f"Lesen der Datei: {vollstaendiger_pfad} in cp1252")
                 with open(vollstaendiger_pfad, "r", encoding="cp1252", errors="ignore") as f:
                     content = f.read()
                     code_chunks = text_splitter.split_text(content)
+                    logger.success(f"Code Dokument in {len(code_chunks)} Chunks/Blöcke aufgeteilt")
                     for i, chunk in enumerate(code_chunks):
                         doc = Document(
                             page_content=chunk,
@@ -138,7 +143,6 @@ def perform_java_chunking(code_document, chunk_size=150, chunk_overlap=30) -> li
                         documents.append(doc)
             except Exception as e2:
                 logger.error(f"Fallback lesen fehlgeschlagen für {vollstaendiger_pfad}: {e2}")
-
     return documents
 
 # Example: caching a query embedding
@@ -166,25 +170,24 @@ def parse_documents(projekt_pfad: Path):
 
 docs = parse_documents(GSM_PATH)
 
-logger.info(f"Adding a total of {len(docs)} documents to vector store.")
+logger.info(f"Füge {len(docs)} Dokumente zur Vektordatenbank hinzu.")
 document_ids = vector_store.add_documents(documents=docs)
-logger.info(f"Successfully added documents with e.g. IDs: {document_ids[:3]}")
-
-
-from langchain.tools import tool
+logger.success(f"Erfolgreich vektorisierte Daten zur Datenbank hinzugefügt mit Bsp.-ID's: {document_ids[:3]}")
 
 @tool(response_format="content_and_artifact")
 def retrieve_context(query: str):
-    """Retrieve information to help answer a query."""
+    """Erhebt Daten zum Verbessern der Antwort des LLM-Requests"""
     try:
+        logger.info("Erhebe Dokumente ")
         retrieved_docs = vector_store.similarity_search(query, k=2)
         serialized = "\n\n".join(
             (f"Source: {doc.metadata}\nContent: {doc.page_content}")
             for doc in retrieved_docs
         )
+        logger.success("Erfolgreich Dokumente anhand der Kontextabfrage erhoben")
         return serialized, retrieved_docs
     except Exception as e:
-        logger.info(f"Fehler bei der Kontextabfrage: {e}")
+        logger.error(f"Fehler bei der Kontextabfrage: {e}")
         return "Fehler bei der Kontextabfrage", []
 
 if __name__ == "__main__":
