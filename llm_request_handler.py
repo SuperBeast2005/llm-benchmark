@@ -5,6 +5,9 @@ from langfuse.langchain import CallbackHandler
 from langchain_core.messages import message_to_dict
 from pathlib import Path    
 from prompt import Prompt
+from benchmark_logger import RAGLogger
+
+logger = RAGLogger()
 
 system_prompt_java = """Your task is to generate java code for the given user prompt. Only generate java code and nothing else. 
     If you include any explanations or comments, please add them as java comments."""
@@ -34,13 +37,20 @@ def llm_request(model_name: str, user_prompt: Prompt, system_prompt: str | None,
         system_prompt=system_prompt,
         tools=tools
     )
-    response = agent.invoke(
+    for event in agent.stream(
         {"messages": [{"role": "user", "content": user_prompt.prompt}]},
-        config={"callbacks": [langfuse_handler]}
-    )
+        stream_mode="values",
+        #config={"callbacks": [langfuse_handler]}
+    ):
+        try:
+            #logger.info(f"Event Type: {event['type']}")
+            event["messages"][-1].pretty_print()
+            #logger.info(f"Event Messages: {event['messages']}\n")
+        except Exception as e:
+            logger.error(f"Fehler beim Verarbeiten des Events: {e}")
 
     # Extrahieren des generierten Code's und der Token-Nutzung aus der Antwort
-    serializable_messages = [message_to_dict(m) for m in response['messages']]
+    serializable_messages = [message_to_dict(m) for m in event['messages']]
     code_response = serializable_messages[1]['data']['content']
     token_usage = serializable_messages[1]['data']['response_metadata']['token_usage']
     prompt_tokens = token_usage['prompt_tokens']

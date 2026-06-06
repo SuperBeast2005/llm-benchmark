@@ -14,6 +14,7 @@ from gsm_runner import run_gsm
 from llm_request_handler import llm_request
 from passatk import pass_at_k
 from extract_test_data import extract_test_data
+from rag import retrieve_context
 
 # ==================== KONFIGURATION ====================
 GSM_PATH = Path(r"C:\DEV\Workspaces\geographic-site-management")
@@ -43,8 +44,8 @@ few_shot = Prompt("fewshot",
                   )
 
 caveman = Prompt("caveman", 
-                 "Fakultaet", 
-                 "Erstelle eine Java Methode, Soll Fakütltät brechen. Zeige 2 Beispiele in der Klasse."
+                 "GSM", 
+                 "Welche Endpunkte besitz die GSM-API? GIb mir alle Endpunkte mit Namen zurück"
                  )
 
 cot = Prompt("cot",
@@ -64,13 +65,17 @@ test_prompts: list[Prompt] = [
 ]
 
 #Java System Prompt
-system_prompt = """Your task is to generate java code for the given user prompt. 
-Only generate java methods and no classes, no additional text. The code should be a complete, compilable class.
-If you include any explanations or comments, please add them as java comments.
-Make sure the code is production-ready, includes proper error handling and has the same class name as the java file name."""
+system_prompt = """
+Du bist ein Coding Agent für die GSM-API.
+Deine Aufgabe ist es, Java Code zu generieren, der die Anforderungen des Benutzers erfüllt.
+Entnehme bitte den Kontext aus den bereitgestellten Dokumenten und verwende diesen, um den Code zu generieren.
+Die Dokumente liegen dir als Emdeddings vor, die du bei Bedarf abrufen kannst. Nutze diese Informationen, um den Code korrekt zu generieren.
+Wenn du Code generierst, stelle sicher, dass er korrekt formatiert ist und alle notwendigen Importe enthält.
+Wenn du Erklärungen oder Kommentare hinzufügen musst, füge diese bitte als Java-Kommentare
+"""
 
 # ==================== GENERIERUNG & EINBINDUNG DES JAVA CODES ====================
-def run_python_benchmark(models: list[str], prompts: list[Prompt]) -> tuple[list[str], list[Prompt]]:
+def code_generation(models: list[str], prompts: list[Prompt]) -> tuple[list[str], list[Prompt]]:
     """ Führt den Python Benchmark aus und generiert Java Code für jedes Modell und jeden Prompt.
     
     Parameter:
@@ -80,7 +85,7 @@ def run_python_benchmark(models: list[str], prompts: list[Prompt]) -> tuple[list
     try:
         for llm in models:
             for user_prompt in prompts:
-                logger.info("=" * 60)
+            
                 logger.info(f"Generiert Code für:{user_prompt.use_case} mit Prompt-Typ:{user_prompt.prompt_type} und Modell:{llm}")
 
                 # Führe Benchmark aus
@@ -88,13 +93,13 @@ def run_python_benchmark(models: list[str], prompts: list[Prompt]) -> tuple[list
                     model_name=llm,
                     user_prompt=user_prompt,
                     system_prompt=system_prompt,
-                    tools=None
+                    tools=[retrieve_context]
                 )
-                logger.info("=" * 60)
+            
                 logger.success("Code Generieren erfolgreich abgeschlossen")
     
     except Exception as e:
-        logger.info("=" * 60)
+    
         logger.error(f"Fehler beim Code Generieren: {str(e)}")
         raise
     return models, prompts
@@ -136,7 +141,7 @@ def build_gsm() -> bool:
     logger.info("Baue Java Projekt mit Gradle...")
     
     if not Path(GSM_PATH).exists():
-        logger.info("=" * 60)
+    
         logger.error(f"Projekt Pfad existiert nicht: {GSM_PATH}")
         logger.warning("Bitte GSM_PATH in dieser Datei anpassen!")
         return False
@@ -155,16 +160,16 @@ def build_gsm() -> bool:
         os.chdir(original_cwd)
         
         if result.returncode == 0:
-            logger.info("=" * 60)
+        
             logger.success("Gradle Build erfolgreich")
             return True
         else:
-            logger.info("=" * 60)
+        
             logger.error(f"Gradle Build fehlgeschlagen:\n{result.stderr}")
             return False
     
     except Exception as e:
-        logger.info("=" * 60)
+    
         logger.error(f"Fehler beim Gradle Build: {str(e)}")
         return False
 
@@ -211,18 +216,17 @@ def benchmark():
     log_file = REPORT_DIR / f"benchmark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
     logger = BenchmarkLogger(log_file)
     
-    logger.info("=" * 60)
+
     logger.info("Startet Benchmark")
-    logger.info("=" * 60)
     logger.info("Generiert Java Code")
     #llms_n_prompts = run_python_benchmark(llms, test_prompts)
-    #llm_request(
-    #    model_name=mistral,
-    #    user_prompt=caveman,
-    #    system_prompt=system_prompt,
-    #    tools=None )
+    llm_request(
+        model_name=mistral,
+        user_prompt=caveman,
+        system_prompt=system_prompt,
+        tools=[retrieve_context]
+        )
 
-    logger.info("=" * 60)
     logger.info("Fügt Java Code zum GSM hinzu")
     
     #for model in llms_n_prompts[0]:
@@ -230,7 +234,6 @@ def benchmark():
     #        write_to_gsm(model, prompt)
     #write_to_gsm(mistral, caveman)
 
-    logger.info("=" * 60)
     logger.info("Baut GSM mit Gradle")
     try:    
         #build_gsm()
@@ -240,22 +243,18 @@ def benchmark():
         sys.exit(1)
         return 1
     
-    logger.info("=" * 60)
     logger.info("Startet GSM")
     #run_gsm()
     #time.sleep(60)
 
-    logger.info("=" * 60)
     logger.info("Führt Functional Tests durch")
     # tests = run_gsm_functional_tests()
     # tests.wait()
 
-    logger.info("=" * 60)
     logger.info("Errechnet Pass@K")
     #pass_at_1 = pass_at_k(1, extract_test_data())
     #logger.info(f"Die Wahrscheinlichkeit für Pass@{pass_at_1['k']} mit n:{pass_at_1['n']}, c:{pass_at_1['c']}, k:{pass_at_1['k']} = {pass_at_1['pass_at_k']}")
     
-    logger.info("=" * 60)
     logger.success("✓ Benchmark erfolgreich abgeschlossen!")
     
     return 0 

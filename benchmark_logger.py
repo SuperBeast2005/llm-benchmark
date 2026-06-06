@@ -19,10 +19,34 @@ class BenchmarkLogger:
     def log(self, message: str, level: str = "INFO"):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         log_message = f"[{timestamp}] [{level}] {message}"
+        print("=" * 60)
         print(log_message)
         with open(self.log_file, "a", encoding="utf-8") as f:
             f.write(log_message + "\n")
             
+    # Hilfsmethoden für verschiedene Log-Level
+    def info(self, message: str):
+        self.log(message, "INFO")
+    
+    def error(self, message: str):
+        self.log(message, "ERROR")
+    
+    def success(self, message: str):
+        self.log(message, "SUCCESS")
+    
+    def warning(self, message: str):
+        self.log(message, "WARNING")
+
+class RAGLogger:
+    def __init__(self):
+        pass
+
+    def log(self, message:str, level:str = "INFO"):
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        log_message = f"[{timestamp}] [{level}] {message}"
+        print("=" * 60)
+        print(log_message)
+
     # Hilfsmethoden für verschiedene Log-Level
     def info(self, message: str):
         self.log(message, "INFO")
