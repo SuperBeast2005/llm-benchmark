@@ -152,9 +152,9 @@ logger.success(f"Erfolgreich vektorisierte Daten zur Datenbank hinzugefügt mit 
 def retrieve_context(query: ModelRequest) -> str:
     """Erhebt Daten zum Verbessern der Antwort des LLM-Requests"""
     try:
-        logger.info("Erhebe Dokumente ")
+        logger.info("Erhebe Dokumente")
         last_query = query.state["messages"][-1].text
-        retrieved_docs = vector_store.similarity_search(last_query)
+        retrieved_docs = vector_store.similarity_search(last_query, k=9000)
         #serialized = "\n\n".join(
         #    (f"Source: {doc.metadata}\nContent: {doc.page_content}")
         docs = "\n\n".join(doc.page_content for doc in retrieved_docs)
@@ -164,6 +164,41 @@ def retrieve_context(query: ModelRequest) -> str:
     except Exception as e:
         logger.error(f"Fehler bei der Kontextabfrage: {e}")
         return "Fehler bei der Kontextabfrage"
+    
+#from pydantic import BaseModel, Field
+#from typing import Literal
+#from langchain.agents import create_agent
+#from langgraph.graph import MessagesState
+#
+#class GradeDocuments(BaseModel):
+#    """Grade documents using a binary score for relevance check."""
+#
+#    binary_score: str = Field(
+#        description="Relevance score: 'yes' if relevant, or 'no' if not relevant"
+#    )
+#
+#@dynamic_prompt("grade_documents", args_schema=GradeDocuments)
+#def grade_documents(state: ModelRequest) -> Literal["generate_answer", "rewrite_question"]:
+#    """Determine whether the retrieved documents are relevant to the question."""
+#    initial_prompt = state["messages"][0].content
+#    context = state["messages"][-1].content
+#
+#    response = (
+#        create_agent(
+#            system_prompt=f"Given the prompt and the retrieved documents, determine if the documents are relevant to answering the question. \
+#            Return 'yes' if the documents are relevant and 'no' if they are not relevant. \
+#            Prompt: {initial_prompt}\n\nRetrieved Documents:\n{context}"
+#        )
+#        .with_structured_output(GradeDocuments).invoke(
+#            [{"role": "user", "content": "Please grade the relevance of the retrieved documents to the question."}]
+#        )
+#    )
+#    score = response.binary_score
+#
+#    if score == "yes":
+#        return "generate_answer"
+#    else:
+#        return "rewrite_question"
 
 if __name__ == "__main__":
     #logger.info(extract_documents(GSM_PATH))

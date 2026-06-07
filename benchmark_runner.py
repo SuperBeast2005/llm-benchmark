@@ -45,7 +45,7 @@ caveman = Prompt("caveman",
                  "Bitte baue den listGeographicSite Endpoint der GSM API in den Geographic Sites Controller, der einen neuen Geographic Site Eintrag in der Datenbank erstellt.\
                     Verwende die Informationen aus den bereitgestellten Dokumenten der Vektordatenbank, um die Anforderungen zu erfüllen. \
                     Der Endpunkt befindet sich schon fertig implementiert in der Vektordatenbank, bitte nutze diesen als Referenz für die Implementierung. \
-                    Bitte stelle sicher, dass der Code korrekt formatiert ist und alle notwendigen Importe enthält. Füge außerdem Java-Kommentare hinzu, um deine Schritte zu erklären."
+                    Bitte stelle sicher, dass der Code korrekt formatiert ist und alle notwendigen Importe enthält. Füge außerdem Java-Kommentare hinzu, um deine Schritte zu erklären, aber keine Anmerkungen außerhalb des Codes."
                  )
 cot = Prompt("cot",
              "Fakultaet", 
@@ -68,7 +68,7 @@ Deine Aufgabe ist es, Java Code zu generieren, der die Anforderungen des Benutze
 Entnehme bitte den Kontext aus den bereitgestellten Dokumenten und verwende diesen, um den Code zu generieren.
 Die Dokumente liegen dir als Emdeddings vor, die du bei Bedarf abrufen kannst. Nutze diese Informationen, um den Code korrekt zu generieren.
 Wenn du Code generierst, stelle sicher, dass er korrekt formatiert ist und alle notwendigen Importe enthält.
-Wenn du Erklärungen oder Kommentare hinzufügen musst, füge diese bitte als Java-Kommentare.
+Wenn du Erklärungen oder Kommentare hinzufügen musst, füge diese bitte als Java-Kommentare und keine zusätzlichen Erklärungen oder Vorschläge außerhalb des Codes hinzu.
 Bitte nur Klassenmethoden und imports generieren, keine komplette Klasse. Die generierten Methoden werden in die bestehende Klasse 'GeographicSitesController' eingefügt,
 also stelle sicher, dass die Methoden-Signaturen und der Code mit der bestehenden Struktur kompatibel sind.
 """
@@ -134,7 +134,6 @@ def write_to_gsm(model: str, prompt: Prompt):
     except Exception as e:
         logger.error(f"Fehler beim Schreiben ins GSM-Projekt: {e}")
 
-
 # ==================== JAVA/GSM BUILD & TEST ====================
 def build_gsm() -> bool:
     """
@@ -172,7 +171,6 @@ def build_gsm() -> bool:
     except Exception as e:
         logger.error(f"Fehler beim Gradle Build: {e}")
         return False
-
 
 def run_gsm_functional_tests() -> bool:
     """ Führt die Functional Tests für GSM mit Gradle aus

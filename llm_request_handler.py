@@ -40,15 +40,14 @@ def llm_request(model_name: str, user_prompt: Prompt, system_prompt: str | None,
         tools=tools,
         middleware=middleware
     )
-    for event in agent.stream(
-        {"messages": [{"role": "user", "content": user_prompt.prompt}]},
-        stream_mode="values"
-    ):
-        try:
-            logger.success("Events erfolgreich erhalten")
-            event["messages"][-1].pretty_print()
-        except Exception as e:
-            logger.error(f"Fehler beim Verarbeiten des Events: {e}")
+    
+    try:
+        logger.info(f"Starte LLM-Request mit Modell '{model_name}' für Use Case '{user_prompt.use_case}' und Prompt Type '{user_prompt.prompt_type}'")
+        event = agent.invoke({"messages": [{"role": "user", "content": user_prompt.prompt}]})
+        logger.success("LLM-Request erfolgreich verarbeitet, generierter Code:")
+        event["messages"][-1].pretty_print()
+    except Exception as e:
+        logger.error(f"Fehler beim Verarbeiten des Events: {e}")
 
     # Extrahieren des generierten Code's und der Token-Nutzung aus der Antwort
     serializable_messages = [message_to_dict(m) for m in event['messages']]
