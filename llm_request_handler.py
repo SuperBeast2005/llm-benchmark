@@ -19,7 +19,7 @@ system_prompt_java = """Your task is to generate java code for the given user pr
 system_prompt_python = """Your task is to generate python code for the given user prompt. Only generate python code and nothing else. 
     If you include any explanations or comments, please add them as python comments."""
 
-def llm_request(model_name: str, user_prompt: Prompt, system_prompt: str | None, tools: list | None) -> None:
+def llm_request(model_name: str, user_prompt: Prompt, system_prompt: str | None, tools: list | None, middleware: list | None) -> None:
     """ Führt eine Anfrage an das LLM aus, um Code zu generieren, und speichert die Ergebnisse in Text- und Java-Dateien.
     
     Parameter:
@@ -27,6 +27,7 @@ def llm_request(model_name: str, user_prompt: Prompt, system_prompt: str | None,
     - user_prompt (Prompt): Ein Prompt-Objekt, das die Details der Anfrage enthält (use_case, prompt_type, prompt).
     - system_prompt (str | None): Ein optionaler System-Prompt, der Anweisungen für die Codegenerierung enthält.
     - tools (list | None): Eine optionale Liste von Tools, die für die Codegenerierung verwendet werden können.
+    - middleware (list | None): Eine optionale Liste von Middleware-Komponenten, die für die Verarbeitung der Anfrage verwendet werden können.
     """
     # Initialisieren von Langfuse Client und Handler
     langfuse = get_client()
@@ -36,25 +37,25 @@ def llm_request(model_name: str, user_prompt: Prompt, system_prompt: str | None,
     agent = create_agent(
         model=model_name,
         system_prompt=system_prompt,
-        tools=tools
+        tools=tools,
+        middleware=middleware
     )
     for event in agent.stream(
         {"messages": [{"role": "user", "content": user_prompt.prompt}]},
-        stream_mode="values",
-        #config={"callbacks": [langfuse_handler]}
+        stream_mode="values"
     ):
         try:
-            #logger.info(f"Event Type: {event['type']}")
             logger.success("Events erfolgreich erhalten")
             event["messages"][-1].pretty_print()
-            #logger.info(f"Event Messages: {event['messages']}\n")
         except Exception as e:
             logger.error(f"Fehler beim Verarbeiten des Events: {e}")
 
     # Extrahieren des generierten Code's und der Token-Nutzung aus der Antwort
     serializable_messages = [message_to_dict(m) for m in event['messages']]
-    code_response = serializable_messages[1]['data']['content']
-    token_usage = serializable_messages[1]['data']['response_metadata']['token_usage']
+    #print(serializable_messages)
+    code_response = serializable_messages[-1]['data']['content']
+    #print(code_response)
+    token_usage = serializable_messages[-1]['data']['response_metadata']['token_usage']
     prompt_tokens = token_usage['prompt_tokens']
     completion_tokens = token_usage['completion_tokens']
 

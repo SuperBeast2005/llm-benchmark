@@ -14,7 +14,7 @@ class BenchmarkLogger:
     - warning(message: str): Loggt eine Nachricht mit dem Log-Level "WARNING".
     """
     def __init__(self):
-        log_file = REPORT_DIR / f"benchmark_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+        log_file = REPORT_DIR / f"benchmark_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log"
         self.log_file = log_file
         self.log_file.parent.mkdir(parents=True, exist_ok=True)
     
@@ -22,7 +22,7 @@ class BenchmarkLogger:
     def log(self, message: str, level: str = "INFO"):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         log_message = f"[{timestamp}] [{level}] {message}"
-        print("=" * 60)
+        print("=" * 80)
         print(log_message)
         with open(self.log_file, "a", encoding="utf-8") as f:
             f.write(log_message + "\n")

@@ -41,8 +41,11 @@ few_shot = Prompt("fewshot",
                   "Erstelle eine Java Methode, die die Fakultät einer Zahl berechnet. Zeige 2 Beispiele in der Klasse."
                   )
 caveman = Prompt("caveman", 
-                 "GSM", 
-                 "Welche Endpunkte besitz die GSM-API? GIb mir alle Endpunkte mit Namen zurück"
+                 "listGeographicSite", 
+                 "Bitte baue den listGeographicSite Endpoint der GSM API in den Geographic Sites Controller, der einen neuen Geographic Site Eintrag in der Datenbank erstellt.\
+                    Verwende die Informationen aus den bereitgestellten Dokumenten der Vektordatenbank, um die Anforderungen zu erfüllen. \
+                    Der Endpunkt befindet sich schon fertig implementiert in der Vektordatenbank, bitte nutze diesen als Referenz für die Implementierung. \
+                    Bitte stelle sicher, dass der Code korrekt formatiert ist und alle notwendigen Importe enthält. Füge außerdem Java-Kommentare hinzu, um deine Schritte zu erklären."
                  )
 cot = Prompt("cot",
              "Fakultaet", 
@@ -65,7 +68,9 @@ Deine Aufgabe ist es, Java Code zu generieren, der die Anforderungen des Benutze
 Entnehme bitte den Kontext aus den bereitgestellten Dokumenten und verwende diesen, um den Code zu generieren.
 Die Dokumente liegen dir als Emdeddings vor, die du bei Bedarf abrufen kannst. Nutze diese Informationen, um den Code korrekt zu generieren.
 Wenn du Code generierst, stelle sicher, dass er korrekt formatiert ist und alle notwendigen Importe enthält.
-Wenn du Erklärungen oder Kommentare hinzufügen musst, füge diese bitte als Java-Kommentare
+Wenn du Erklärungen oder Kommentare hinzufügen musst, füge diese bitte als Java-Kommentare.
+Bitte nur Klassenmethoden und imports generieren, keine komplette Klasse. Die generierten Methoden werden in die bestehende Klasse 'GeographicSitesController' eingefügt,
+also stelle sicher, dass die Methoden-Signaturen und der Code mit der bestehenden Struktur kompatibel sind.
 """
 
 # ==================== GENERIERUNG & EINBINDUNG DES JAVA CODES ====================
@@ -87,7 +92,8 @@ def code_generation(models: list[str], prompts: list[Prompt]) -> tuple[list[str]
                     model_name=llm,
                     user_prompt=user_prompt,
                     system_prompt=system_prompt,
-                    tools=[retrieve_context]
+                    tools=None,
+                    middleware=[retrieve_context]
                 )
                 logger.success("Code Generieren erfolgreich abgeschlossen")
     
@@ -222,7 +228,8 @@ def benchmark():
             model_name=mistral,
             user_prompt=caveman,
             system_prompt=system_prompt,
-            tools=[retrieve_context]
+            tools=[],
+            middleware=[retrieve_context]
             )
     except Exception as e:
         logger.error(f"Fehler beim Generieren: {e}")
