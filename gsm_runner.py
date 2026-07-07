@@ -22,7 +22,6 @@ def run_gsm():
         process = subprocess.Popen(
             [str(mvnw_path), 'spring-boot:run'],
             cwd=GSM_PATH,
-            creationflags=subprocess.CREATE_NEW_CONSOLE,
             env=os.environ.copy()
         )
         logger.success("Spring Boot wurde erfolgreich in einem neuen Fenster/Subprocess gestartet...")

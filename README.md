@@ -1,7 +1,5 @@
 # LLM-Benchmark
 
-![Pass@k Benchmark](Pass@k-Benchmark.jpg)
-
 Ein Repository zur Generierung, Speicherung und Auswertung von LLM-generiertem Java-Code im Kontext eines bestehenden Java/Spring-Boot-Projekts.
 
 ## Überblick
@@ -18,12 +16,12 @@ Der Fokus liegt auf:
 
 ```
 .
-├── llm_request_handler.py    # LLM-Anfragen und Generierung von Java-Code
+├── ai_request_handler.py    # LLM-Anfragen und Generierung von Java-Code
 ├── benchmark_logger.py      # Einfacher Logger für den Benchmark-Workflow
 ├── benchmark_runner.py      # Steuerung des Workflows und GSM-Integration
 ├── extract_test_data.py     # Extraktion und Konvertierung von Testdaten aus XML-Dateien
 ├── gsm_runner.py            # Starten der GSM Spring Boot Anwendung
-├── passatk.py               # Berechnung der Pass@K-Metrik
+├── passatk.py              # Berechnung der Pass@K-Metrik
 ├── prompt.py                # Prompt-Klasse zur Beschreibung von Anfragen
 ├── requirements.txt         # Python-Abhängigkeiten
 ├── reports/                 # Berichte und Logdateien
@@ -35,7 +33,7 @@ Der Fokus liegt auf:
 
 ## Module
 
-### `llm_request_handler.py`
+### `ai_request_handler.py`
 
 Führt die Anfrage an ein LLM durch und speichert die Antwort als Java-Code sowie Metadaten.
 
@@ -51,7 +49,7 @@ Koordiniert den Benchmark-Workflow und die Integration in das GSM-Projekt.
 
 Hauptaufgaben:
 - Definiert LLM-Modelle und Prompts
-- Ruft `llm_request()` für die Code-Generierung auf
+- Ruft `ai_request()` für die Code-Generierung auf
 - Liest generierten Code und schreibt ihn in eine existierende Java-Datei des GSM-Projekts
 - Unterstützt Build- und Test-Schritte für das Zielprojekt
 
@@ -88,7 +86,7 @@ Extrahiert Testergebnisse aus XML-Dateien der GSM Functional Tests und speichert
 ## Workflow
 
 1. Definiere Modelle und Prompts in `benchmark_runner.py`.
-2. Rufe `llm_request()` aus `llm_request_handler.py` auf, um Java-Code zu generieren.
+2. Rufe `ai_request()` aus `ai_request_handler.py` auf, um Java-Code zu generieren.
 3. Speichere generierten Code in `generated_code/{model}/{prompt_type}/{use_case}/`.
 4. Integriere den generierten Code in das GSM-Projekt via `benchmark_runner.py`.
 5. Optional: Starte die GSM-Anwendung mit `gsm_runner.py`.
@@ -97,10 +95,10 @@ Extrahiert Testergebnisse aus XML-Dateien der GSM Functional Tests und speichert
 ## Beispiel
 
 ```python
-from llm_request_handler import llm_request
+from ai_request_handler import ai_request
 from prompt import Prompt
 
-llm_request(
+ai_request(
     model_name="openai:WARN-GLOBAL_gemini-3-pro-preview",
     user_prompt=Prompt(
         prompt_type="few_shot",
