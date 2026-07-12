@@ -6,6 +6,7 @@ import sys
 import xml.etree.ElementTree as ET
 import json
 from dotenv import load_dotenv
+import time 
 
 #Logger Import
 from benchmark_logger import BenchmarkLogger
@@ -13,7 +14,7 @@ from benchmark_logger import BenchmarkLogger
 # ==================== KONFIGURATION ====================
 load_dotenv()
 TEST_RESULTS = Path(r"test_results")
-REPORT_DIR = Path(__file__).parent / "reports"
+REPORT_DIR = Path(r"reports")
 
 # ==================== JAVA/GSM BUILD & TEST ====================
 def build_gsm() -> bool:
@@ -35,7 +36,7 @@ def build_gsm() -> bool:
         
         #GSM mit Maven bauen via Subprocess
         result = subprocess.run(
-            [os.getenv("GSM_PATH") / "mvnw.cmd", "compile"],
+            [str(Path(os.getenv("GSM_PATH")) / "mvnw.cmd"), "compile"],
             check=True,
             cwd=os.getenv("GSM_PATH")
         )
@@ -70,10 +71,6 @@ def run_gsm() -> bool:
         logger.success("Spring Boot wurde erfolgreich in einem neuen Fenster/Subprocess gestartet...")
         return True
 
-    except KeyboardInterrupt:
-        process.terminate()
-        logger.warning("GSM durch Keyboard Interupt terminiert")
-        sys.exit(0)
     except Exception as e:
         logger.error(f"Fehler beim Starten der Springboot Applikation: {e}")
         sys.exit(1)
@@ -85,9 +82,9 @@ def run_gsm_functional_tests() -> bool:
         True wenn erfolgreich, False sonst
     """
     gradle_cmd = [
-        str(Path(os.getenv("FUNCTIONAL_TESTS")) / "gradlew.bat"),
+        str(Path(os.getenv("FUNCTIONAL_TESTS_PATH")) / "gradlew.bat"),
         "test",
-        #"--tests", "de.telekom.geo.site.test.create.*",
+        "--tests", "de.telekom.geo.site.test.create.*",
         #"--tests", "de.telekom.geo.site.test.delete.*",
         "--tests", "de.telekom.geo.site.test.list.*",
         #"--tests", "de.telekom.geo.site.test.patch.*",
@@ -101,7 +98,7 @@ def run_gsm_functional_tests() -> bool:
         logger.info("Führe GSM-Funktional-Test-Subprocess aus")
         result = subprocess.Popen(
             gradle_cmd,
-            cwd=os.getenv("FUNCTIONAL_TESTS"),
+            cwd=os.getenv("FUNCTIONAL_TESTS_PATH"),
             creationflags=subprocess.CREATE_NEW_CONSOLE,
             env=os.environ.copy(),
             text=True
@@ -197,7 +194,7 @@ def benchmark():
         1. Baut durch den Copilot generierten Code für das GSM-Projekt
         2. Baut GSM mit Maven und startet die Spring Boot Anwendung lokal
         3. Führt Funktional Tests mit Gradle durch
-        4. Ermittelt Pass@1-Metrik nach den Funktional Tests
+        4. Ermittelt alle Pass@1-Metrik anhand der Funktional Tests Ergebnisse
     """
     # Initialisiere Logger
     global logger
@@ -206,7 +203,7 @@ def benchmark():
     # 1. Baue durch den Copilot generierten Code für das GSM-Projekt
     try:    
         logger.info("Baut GSM mit Gradle")
-        #build_gsm()
+        build_gsm()
         logger.success("✓ Gradle Build erfolgreich!")
         pass
     except Exception as e:
@@ -217,8 +214,8 @@ def benchmark():
     # 2. Starte GSM mit Maven und Spring Boot
     try:
         logger.info("Startet GSM")
-        #run_gsm()
-        #time.sleep(60)
+        run_gsm()
+        time.sleep(60)
         logger.success("✓ GSM erfolgreich gestartet!")
     except Exception as e:
         logger.error(f"GSM-Start fehlgeschlagen: {e}")
@@ -228,14 +225,14 @@ def benchmark():
     # 3. Führe Funktional Tests mit Gradle durch
     try:
         logger.info("Führt Funktional Tests aus")
-        # tests = run_gsm_functional_tests()
+        tests = run_gsm_functional_tests()
         logger.success("✓ Funktional Tests erfolgreich abgeschlossen!")
     except Exception as e:
         logger.error(f"Fehler beim Testen: {e}")
         sys.exit(1)
         return 1
 
-    # 4. Ermittelt Pass@1-Metrik nach den Funktional Tests
+    # 4. Ermittelt alle Pass@1-Metrik anhand der Funktional Tests Ergebnisse
     logger.info("Errechnet Pass@1")
     #pass_at_1 = pass_at_1(extract_test_data())
     #logger.info(f"Die Wahrscheinlichkeit für Pass@1 mit n:{pass_at_1['n']} und c:{pass_at_1['c']} beträgt {pass_at_1}%")
